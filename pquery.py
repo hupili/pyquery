@@ -1,9 +1,23 @@
 '''
-CLI for pyquery
+grep for HTML; CLI for pyquery
 
 Usage:
-    pyquery <selector>
-    pyquery <selector> -p <projector>
+    pquery <selector>
+    pquery <selector> -p <projector>
+    pquery <selector> -f <format_string>
+    pquery -h | --help
+
+Options:
+    -p: project the dict onto field `<projector>`.
+    -f: equivalent of `<format_string>.format(item)`,
+        where item is the dict form of one selected HTML element.
+    -h | -v: shows this doc.
+
+Dict keys:
+    'tag': The HTML tag
+    'html': Inner HTML of the element
+    'text': Inner text of the element
+    ...: [optional] Other attributes: e.g. 'href'
 '''
 
 import sys
@@ -24,21 +38,29 @@ def project(a, projector):
     for i in a:
         yield i.get(projector, None)
 
+def format_dict(a, format_string):
+    for i in a:
+        yield format_string.format(**i)
+
 def html_element_to_dict(a):
     for i in a:
         d = {}
-        d['tag'] = i.tag
-        d['text'] = i.text
-        d.update(i.attrib)
+        d['html'] = i.html()
+        h = i[0]
+        d['tag'] = h.tag
+        d['text'] = h.text
+        d.update(h.attrib)
         yield d
 
 if __name__ == '__main__':
-    args = docopt.docopt(__doc__)
+    args = docopt.docopt(__doc__, version='0.1')
     html = sys.stdin.read()
     d = pq(html)
     matches = d(args['<selector>'])
-    data = html_element_to_dict(matches)
+    data = html_element_to_dict(matches.items())
     if args['<projector>']:
         data = project(data, args['<projector>'])
+    if args['<format_string>']:
+        data = format_dict(data, args['<format_string>'])
     array_output(data)
 
