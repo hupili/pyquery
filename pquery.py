@@ -45,7 +45,13 @@ def format_dict(a, format_string):
 def html_element_to_dict(a):
     for i in a:
         d = {}
-        d['html'] = i.html()
+        try:
+            d['html'] = i.html()
+        except Exception as e:
+            # log the exception in verbose mode?
+            # Possible exceptions:
+            #    * some utf-8 errors
+            d['html'] = None
         h = i[0]
         d['tag'] = h.tag
         d['text'] = h.text
